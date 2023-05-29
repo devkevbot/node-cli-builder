@@ -1,74 +1,103 @@
 import * as readline from "node:readline";
-import { exit, stdin, stdout } from "node:process";
+import { stdin, stdout } from "node:process";
 
-class Cli {
-  constructor({ options }) {
-    this.input = stdin;
-    this.output = stdout;
-    this.highlightSymbol = "*";
-    this.state = {
-      index: 0,
-      options,
+export class Cli {
+  #input;
+  #output;
+  #highlightSymbol;
+  #state;
+
+  constructor({ questions }) {
+    this.#input = stdin;
+    this.#output = stdout;
+    this.#highlightSymbol = "*";
+    this.#state = {
+      currQuestionIdx: 0,
+      currChoiceIdx: 0,
+      questions,
     };
   }
 
   start() {
-    readline.emitKeypressEvents(this.input);
-    if (this.input.isTTY) {
-      this.input.setRawMode(true);
+    readline.emitKeypressEvents(this.#input);
+    if (this.#input.isTTY) {
+      this.#input.setRawMode(true);
     }
-    this.input.resume();
-    this.input.on("keypress", (...args) => this.onKeyPress(...args));
+    this.#input.resume();
+    this.#input.on("keypress", (...args) => this.#onKeyPress(...args));
 
-    this.renderOptionMenu();
+    this.#renderQuestion();
   }
 
-  stop() {
-    if (this.input.isTTY) {
-      this.input.setRawMode(false);
+  #stop() {
+    if (this.#input.isTTY) {
+      this.#input.setRawMode(false);
     }
-    this.input.pause();
-    exit(0);
+    this.#input.pause();
   }
 
-  onKeyPress(_, key) {
+  #onKeyPress(_, key) {
     if (!key) return;
 
-    const minIndex = 0;
-    const maxIndex = this.state.options.length - 1;
+    const currQuestion = this.#state.questions[this.#state.currQuestionIdx];
+    const minIdx = 0;
+    const maxIdx = currQuestion.choices.length - 1;
 
-    if (key.name === "down" && this.state.index < maxIndex) {
-      this.state.index += 1;
-      this.renderOptionMenu();
-    } else if (key.name === "up" && this.state.index > minIndex) {
-      this.state.index -= 1;
-      this.renderOptionMenu();
+    if (key.name === "down" && this.#state.currChoiceIdx < maxIdx) {
+      this.#state.currChoiceIdx += 1;
+      this.#renderQuestion();
+    } else if (key.name === "up" && this.#state.currChoiceIdx > minIdx) {
+      this.#state.currChoiceIdx -= 1;
+      this.#renderQuestion();
     } else if (key.name === "esc" || (key.ctrl && key.name === "c")) {
-      this.stop();
+      this.#stop();
     } else if (key.name === "return") {
-      this.output.write(
-        `You selected: ${this.state.options[this.state.index]}`
+      this.#output.write(
+        `You selected: ${currQuestion.choices[this.#state.currChoiceIdx]}\n`
       );
-      this.stop();
+      if (this.#state.currQuestionIdx === this.#state.questions.length - 1) {
+        this.#output.write("All done!");
+        this.#stop();
+      } else {
+        this.#state.currQuestionIdx++;
+        this.#state.currChoiceIdx = 0;
+        this.#renderQuestion();
+      }
     }
   }
 
-  renderOptionMenu() {
-    // This function call assumes that the writable stream is STDOUT
-    console.clear();
+  /**
+   * Renders the prompt for the current question.
+   */
+  #renderPrompt() {
+    const { prompt } = this.#state.questions[this.#state.currQuestionIdx];
+    const borderBox = "=".repeat(prompt.length);
+    this.#output.write(`${borderBox}\n`);
+    this.#output.write(`${prompt}\n`);
+    this.#output.write(`${borderBox}\n`);
+  }
 
-    this.output.write("Select an option:\n");
-
-    this.state.options.forEach((option, i) => {
-      if (this.state.index === i) {
-        this.output.write(`${this.highlightSymbol} ${option}\n`);
+  /**
+   * Renders the list of choices for the current question.
+   */
+  #renderChoices() {
+    const { choices } = this.#state.questions[this.#state.currQuestionIdx];
+    choices.forEach((option, i) => {
+      if (this.#state.currChoiceIdx === i) {
+        this.#output.write(`${this.#highlightSymbol} ${option}\n`);
       } else {
-        this.output.write(`${option}\n`);
+        this.#output.write(`${option}\n`);
       }
     });
   }
+
+  /**
+   * Renders the current questions. Users can then interact with the displayed choices.
+   */
+  #renderQuestion() {
+    // This function call assumes that the writable stream is STDOUT
+    console.clear();
+    this.#renderPrompt();
+    this.#renderChoices();
+  }
 }
-
-const cli = new Cli({ options: ["foo", "bar", "baz"] });
-
-cli.start();
