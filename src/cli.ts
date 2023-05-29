@@ -1,13 +1,23 @@
 import * as readline from "node:readline";
 import { stdin, stdout } from "node:process";
 
+type Question = {
+  id: number;
+  prompt: string;
+  choices: string[];
+};
+
+type CliConstructor = {
+  questions: Question[];
+};
+
 export class Cli {
   #input;
   #output;
   #highlightSymbol;
   #state;
 
-  constructor({ questions }) {
+  constructor({ questions }: CliConstructor) {
     this.#input = stdin;
     this.#output = stdout;
     this.#highlightSymbol = "*";
@@ -24,7 +34,7 @@ export class Cli {
       this.#input.setRawMode(true);
     }
     this.#input.resume();
-    this.#input.on("keypress", (...args) => this.#onKeyPress(...args));
+    this.#input.on("keypress", (_, key) => this.#onKeyPress(key));
 
     this.#renderQuestion();
   }
@@ -36,7 +46,7 @@ export class Cli {
     this.#input.pause();
   }
 
-  #onKeyPress(_, key) {
+  #onKeyPress(key: { name: string; ctrl: boolean }) {
     if (!key) return;
 
     const currQuestion = this.#state.questions[this.#state.currQuestionIdx];

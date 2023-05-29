@@ -1,4 +1,4 @@
-import { Cli } from "./index.mjs";
+import { Cli } from "./cli.ts";
 
 const questions = [
   { id: 1, prompt: "Select Framework", choices: ["Vanilla", "React", "Vue"] },

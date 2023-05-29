@@ -1,10 +1,9 @@
 {
   "name": "cli-builder",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A from-scatch implementation of a selection-based CLI program.",
   "scripts": {
-    "dev": "nodemon src/index.mjs"
+    "dev": "ts-node --esm src/index.ts"
   },
   "type": "module",
   "repository": {
@@ -16,6 +15,8 @@
   "license": "ISC",
   "homepage": "https://github.com/devkevbot/node-cli-builder#readme",
   "devDependencies": {
-    "nodemon": "2.0.22"
+    "@types/node": "20.2.5",
+    "ts-node": "10.9.1",
+    "typescript": "5.0.4"
   }
 }

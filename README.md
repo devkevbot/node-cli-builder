@@ -8,5 +8,5 @@ A from-scatch implementation of a selection-based CLI program.
 - [x] Allow more than one question to be asked
 - [ ] Terminal colours
 - [ ] Clear console even when write stream is not STDOUT
-- [ ] Port to TypeScript
+- [x] Port to TypeScript
 - [ ] Allow custom input and output streams rather than STDIN and STDOUT
