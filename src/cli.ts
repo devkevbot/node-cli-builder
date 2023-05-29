@@ -7,15 +7,27 @@ type Question = {
   choices: string[];
 };
 
+type Selection = {
+  id: number;
+  value: string;
+};
+
 type CliConstructor = {
   questions: Question[];
+};
+
+type CliState = {
+  currQuestionIdx: number;
+  currChoiceIdx: number;
+  questions: Question[];
+  selections: Selection[];
 };
 
 export class Cli {
   #input;
   #output;
   #highlightSymbol;
-  #state;
+  #state: CliState;
 
   constructor({ questions }: CliConstructor) {
     this.#input = stdin;
@@ -25,6 +37,7 @@ export class Cli {
       currQuestionIdx: 0,
       currChoiceIdx: 0,
       questions,
+      selections: [],
     };
   }
 
@@ -62,11 +75,24 @@ export class Cli {
     } else if (key.name === "esc" || (key.ctrl && key.name === "c")) {
       this.#stop();
     } else if (key.name === "return") {
-      this.#output.write(
-        `You selected: ${currQuestion.choices[this.#state.currChoiceIdx]}\n`
-      );
+      const selection = currQuestion.choices[this.#state.currChoiceIdx];
+      this.#output.write(`You selected: ${selection}\n`);
+      this.#state.selections.push({ id: currQuestion.id, value: selection });
+
       if (this.#state.currQuestionIdx === this.#state.questions.length - 1) {
-        this.#output.write("All done!");
+        console.clear();
+        this.#output.write("All done!\n");
+        this.#output.write("Your selections:\n");
+        this.#state.selections.forEach((selection) => {
+          const question = this.#state.questions.find(
+            (q) => q.id === selection.id
+          );
+          if (!question) {
+            this.#output.write("This shouldn't happen.!");
+            return;
+          }
+          this.#output.write(`- ${question.prompt} -> ${selection.value}\n`);
+        });
         this.#stop();
       } else {
         this.#state.currQuestionIdx++;
